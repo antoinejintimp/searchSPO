@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: 'Segoe UI', sans-serif;
+}
+#webSearchForm {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 500px;
+}
+#engineSelect {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+#searchInput {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #0078d4;
+  color: white;
+  cursor: pointer;
+}
+button:hover {
+  background: #005a9e;
+}
+</style>
+</head>
+<body>
+
+<form id="webSearchForm">
+  <select id="engineSelect">
+    <option value="https://www.google.com/search?q=">Google</option>
+    <option value="https://www.bing.com/search?q=">Bing</option>
+    <option value="https://www.ecosia.org/search?q=">Ecosia</option>
+  </select>
+  <input type="text" id="searchInput" placeholder="Rechercher sur le web..." required />
+  <button type="submit">Rechercher</button>
+</form>
+
+<script>
+document.getElementById('webSearchForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const baseUrl = document.getElementById('engineSelect').value;
+  const query = document.getElementById('searchInput').value;
+  window.open(baseUrl + encodeURIComponent(query), '_blank');
+});
+</script>
+
+</body>
+</html>
