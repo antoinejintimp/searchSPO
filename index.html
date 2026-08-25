@@ -8,11 +8,20 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
 
-body {
+html, body {
   margin: 0;
-  padding: 60px;
+  padding: 0;
+  background: transparent; /* laisse voir la page hôte (SharePoint) derrière */
+}
+
+body {
+  padding: 24px;
   font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
-  background: #eef1f4;
+  /* Réserve de la place pour le menu déroulant ouvert : si l'outil qui
+     t'a embed la page mesure la hauteur du contenu pour dimensionner
+     l'iframe, ça l'aide à prévoir large. Ça ne coûte rien : le fond est
+     transparent, donc cet espace est invisible tant que le menu est fermé. */
+  min-height: 230px;
 }
 
 @media (prefers-reduced-motion: reduce) {
