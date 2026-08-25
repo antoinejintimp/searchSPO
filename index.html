@@ -17,11 +17,6 @@ html, body {
 body {
   padding: 24px;
   font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
-  /* Réserve de la place pour le menu déroulant ouvert : si l'outil qui
-     t'a embed la page mesure la hauteur du contenu pour dimensionner
-     l'iframe, ça l'aide à prévoir large. Ça ne coûte rien : le fond est
-     transparent, donc cet espace est invisible tant que le menu est fermé. */
-  min-height: 230px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -95,41 +90,66 @@ body {
 
 #searchInput::placeholder { color: rgba(255, 255, 255, 0.72); }
 
-/* ---------- Sélecteur de moteur : déclencheur + liste custom ---------- */
-.engine-trigger {
+/* ---------- Sélecteur de moteur : segmenté, jamais de contenu qui déborde
+   de la barre. C'est le point important pour un embed en iframe à hauteur
+   fixe (web part "Embed" SharePoint) : un menu qui s'ouvre par-dessus dépend
+   d'une hauteur qu'on ne contrôle pas et se fait couper. Ici, rien ne
+   s'affiche jamais hors de cette pilule, quelle que soit la hauteur donnée
+   à l'iframe. ---------- */
+.engine-switch {
+  position: relative;
   flex-shrink: 0;
-  min-width: 132px;
+  display: flex;
+  align-items: center;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fa 100%);
+  padding: 3px;
+  gap: 2px;
+}
+
+.engine-highlight {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  height: calc(100% - 6px);
+  width: 0; /* posé en JS, mesuré sur l'option cochée */
+  border-radius: 999px;
+  background: var(--navy-ink);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+  z-index: 0;
+}
+
+.engine-option {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  padding: 9px 15px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7f9fa 100%);
-  color: var(--navy-ink);
-  border: none;
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  font-family: inherit;
+  letter-spacing: 0.02em;
+  color: var(--muted);
   cursor: pointer;
-  transition: background 0.15s ease;
+  user-select: none;
+  transition: color 0.2s ease;
 }
 
-.engine-trigger:hover { background: linear-gradient(180deg, #ffffff 0%, #eef1f4 100%); }
+.engine-option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
 
-.engine-trigger:focus-visible {
+.engine-option:has(input:checked) { color: #fff; }
+
+.engine-option:has(input:focus-visible) {
   outline: 2px solid var(--lime);
-  outline-offset: -4px;
+  outline-offset: 2px;
 }
-
-.engine-trigger svg {
-  width: 13px;
-  height: 13px;
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  flex-shrink: 0;
-}
-
-.engine-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
 
 .search-bar__submit {
   position: relative;
@@ -183,53 +203,6 @@ body {
 .search-bar__submit:focus-visible { outline: 2px solid var(--navy-ink); outline-offset: -4px; }
 .search-bar__submit svg { width: 20px; height: 20px; }
 
-/* ---------- Liste déroulante custom (role="listbox") ---------- */
-.engine-listbox {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0; /* recalculé en JS pour rester aligné sous le déclencheur */
-  width: 138px;
-  margin: 0;
-  padding: 6px;
-  list-style: none;
-  background: #fff;
-  border: 1px solid #e7e9ec;
-  border-radius: 20px;
-  overflow: hidden;
-  z-index: 20;
-  opacity: 0;
-  transform: translateY(-6px) scale(0.96);
-  transform-origin: top center;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.16s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.2s;
-}
-
-.engine-listbox.is-open {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.engine-option {
-  padding: 12px 16px;
-  border-radius: 14px;
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--navy-ink);
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.engine-option.is-focused { background: #eef1f4; }
-
-.engine-option[aria-selected="true"] {
-  background: var(--navy-ink);
-  color: #fff;
-}
-
 /* Note de confidentialité : présente pour les lecteurs d'écran, invisible
    à l'écran pour rester fidèle à la maquette de référence. */
 .sr-only {
@@ -262,13 +235,18 @@ body {
       />
     </div>
 
-    <button type="button" class="engine-trigger" id="engineTrigger"
-            aria-haspopup="listbox" aria-expanded="false" aria-controls="engineListbox">
-      <span id="engineTriggerLabel">Google</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M6 9l6 6 6-6"/>
-      </svg>
-    </button>
+    <div class="engine-switch" role="radiogroup" aria-label="Moteur de recherche">
+      <span class="engine-highlight" aria-hidden="true"></span>
+      <label class="engine-option" data-engine="google">
+        <input type="radio" name="engine" value="google" checked>Google
+      </label>
+      <label class="engine-option" data-engine="bing">
+        <input type="radio" name="engine" value="bing">Bing
+      </label>
+      <label class="engine-option" data-engine="ecosia">
+        <input type="radio" name="engine" value="ecosia">Ecosia
+      </label>
+    </div>
 
     <button type="submit" class="search-bar__submit" id="submitButton" aria-label="Lancer la recherche">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
@@ -277,12 +255,6 @@ body {
       </svg>
     </button>
   </div>
-
-  <ul class="engine-listbox" id="engineListbox" role="listbox" aria-label="Moteur de recherche" tabindex="-1">
-    <li role="option" id="opt-google" class="engine-option" data-engine="google" aria-selected="true">Google</li>
-    <li role="option" id="opt-bing" class="engine-option" data-engine="bing" aria-selected="false">Bing</li>
-    <li role="option" id="opt-ecosia" class="engine-option" data-engine="ecosia" aria-selected="false">Ecosia</li>
-  </ul>
 
   <p class="sr-only" role="status" id="engineAnnouncement">
     Moteur sélectionné : Google. La recherche s'ouvrira dans un nouvel onglet, sans transmettre l'adresse de ce site.
@@ -307,117 +279,48 @@ body {
   var form = document.getElementById("webSearchForm");
   var input = document.getElementById("searchInput");
   var submitButton = document.getElementById("submitButton");
-  var trigger = document.getElementById("engineTrigger");
-  var triggerLabel = document.getElementById("engineTriggerLabel");
-  var listbox = document.getElementById("engineListbox");
-  var options = Array.prototype.slice.call(listbox.querySelectorAll('[role="option"]'));
+  var switchEl = document.querySelector(".engine-switch");
+  var highlight = document.querySelector(".engine-highlight");
+  var radios = Array.prototype.slice.call(form.querySelectorAll('input[name="engine"]'));
   var announcement = document.getElementById("engineAnnouncement");
 
-  var selectedKey = "google";
-  var focusedIndex = 0;
+  // Fait glisser le highlight jusqu'au segment coché, en se basant sur sa
+  // position réelle (largeurs de texte variables Google/Bing/Ecosia) plutôt
+  // que sur une valeur figée en dur.
+  function moveHighlight() {
+    var checked = form.querySelector('input[name="engine"]:checked');
+    if (!checked) return;
+    var label = checked.closest(".engine-option");
+    var switchRect = switchEl.getBoundingClientRect();
+    var labelRect = label.getBoundingClientRect();
+    highlight.style.width = labelRect.width + "px";
+    highlight.style.transform = "translateX(" + (labelRect.left - switchRect.left - 3) + "px)";
 
-  function keyOf(option) { return option.getAttribute("data-engine"); }
-
-  function positionListbox() {
-    // Aligne la liste sous le déclencheur, quelle que soit sa largeur réelle
-    // (dépend de la police chargée) plutôt qu'une valeur figée en dur.
-    listbox.style.left = trigger.offsetLeft + "px";
-    listbox.style.width = trigger.offsetWidth + "px";
-  }
-
-  function isOpen() { return listbox.classList.contains("is-open"); }
-
-  function openListbox() {
-    positionListbox();
-    listbox.classList.add("is-open");
-    trigger.setAttribute("aria-expanded", "true");
-    focusedIndex = options.findIndex(function (o) { return keyOf(o) === selectedKey; });
-    highlightFocused();
-    // La liste passe de visibility:hidden à visible via une transition CSS ;
-    // on laisse le navigateur poser cette frame avant de tenter le focus,
-    // plutôt que de dépendre du timing exact du changement de style.
-    requestAnimationFrame(function () { listbox.focus(); });
-  }
-
-  function closeListbox(returnFocus) {
-    listbox.classList.remove("is-open");
-    trigger.setAttribute("aria-expanded", "false");
-    if (returnFocus) trigger.focus();
-  }
-
-  function highlightFocused() {
-    options.forEach(function (o, i) {
-      o.classList.toggle("is-focused", i === focusedIndex);
-    });
-    listbox.setAttribute("aria-activedescendant", options[focusedIndex].id);
-  }
-
-  function selectEngine(key) {
-    var entry = SEARCH_ENGINES[key];
-    if (!entry) return;
-    selectedKey = key;
-    options.forEach(function (o) {
-      o.setAttribute("aria-selected", keyOf(o) === key ? "true" : "false");
-    });
-    triggerLabel.textContent = entry.label;
-    announcement.textContent = "Moteur sélectionné : " + entry.label + ". La recherche s'ouvrira dans un nouvel onglet, sans transmettre l'adresse de ce site.";
-  }
-
-  trigger.addEventListener("click", function () {
-    if (!isOpen()) openListbox(); else closeListbox(false);
-  });
-
-  trigger.addEventListener("keydown", function (event) {
-    if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      openListbox();
+    var entry = SEARCH_ENGINES[checked.value];
+    if (entry) {
+      announcement.textContent = "Moteur sélectionné : " + entry.label + ". La recherche s'ouvrira dans un nouvel onglet, sans transmettre l'adresse de ce site.";
     }
-  });
+  }
 
-  listbox.addEventListener("keydown", function (event) {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      focusedIndex = (focusedIndex + 1) % options.length;
-      highlightFocused();
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      focusedIndex = (focusedIndex - 1 + options.length) % options.length;
-      highlightFocused();
-    } else if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      selectEngine(keyOf(options[focusedIndex]));
-      closeListbox(true);
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      closeListbox(true);
-    } else if (event.key === "Tab") {
-      closeListbox(false);
-    }
+  radios.forEach(function (radio) {
+    radio.addEventListener("change", moveHighlight);
   });
+  window.addEventListener("resize", moveHighlight);
+  moveHighlight();
 
-  options.forEach(function (option) {
-    option.addEventListener("click", function () {
-      selectEngine(keyOf(option));
-      closeListbox(true);
-    });
-    option.addEventListener("mouseenter", function () {
-      focusedIndex = options.indexOf(option);
-      highlightFocused();
-    });
-  });
-
-  document.addEventListener("click", function (event) {
-    if (isOpen() && !form.contains(event.target)) closeListbox(false);
-  });
-
-  window.addEventListener("resize", function () {
-    if (isOpen()) positionListbox();
-  });
+  // Le libellé "Outfit" charge en asynchrone (@import) : ses métriques
+  // diffèrent légèrement de la police de repli tant qu'elle n'est pas prête,
+  // ce qui décale le highlight de quelques dixièmes de pixel. On recale une
+  // fois la police effectivement appliquée.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(moveHighlight);
+  }
 
   form.addEventListener("submit", function (event) {
     event.preventDefault();
 
-    var entry = SEARCH_ENGINES[selectedKey];
+    var checked = form.querySelector('input[name="engine"]:checked');
+    var entry = checked ? SEARCH_ENGINES[checked.value] : null;
     // Le moteur doit exister dans la whitelist : sinon on abandonne plutôt
     // que de deviner une URL.
     if (!entry) return;
