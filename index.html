@@ -36,6 +36,11 @@ body {
 
 .search-bar {
   position: relative;
+  display: flex;
+  justify-content: flex-end; /* ancre tout le composant à droite de son
+    conteneur : repliée, la barre devient un petit cercle (86px), qui sans
+    ça resterait collé au bord gauche de l'espace alloué plutôt qu'au bord
+    droit où le déclencheur doit rester visible. */
   max-width: 760px;
 }
 
@@ -45,6 +50,8 @@ body {
   justify-content: flex-end; /* le bouton reste ancré à droite quand la
     barre est repliée : le contenu qui déborde se cache vers la gauche,
     pas vers la droite (qui masquerait le bouton lui-même). */
+  flex-shrink: 0; /* la largeur (100% ou 86px) est pilotée explicitement,
+    pas question qu'un calcul de flex sur .search-bar vienne l'écraser. */
   height: 86px;
   width: 100%;
   padding: 6px;
