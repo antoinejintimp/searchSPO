@@ -42,12 +42,36 @@ body {
 .search-bar__shell {
   display: flex;
   align-items: stretch;
+  justify-content: flex-end; /* le bouton reste ancré à droite quand la
+    barre est repliée : le contenu qui déborde se cache vers la gauche,
+    pas vers la droite (qui masquerait le bouton lui-même). */
   height: 86px;
+  width: 100%;
   padding: 6px;
   gap: 8px;
   border-radius: 999px;
   background: var(--ink);
   border: 4px solid var(--lime);
+  overflow: hidden;
+  transition: width 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Repliée, la barre n'est plus qu'un cercle (largeur = hauteur) autour du
+   bouton loupe. Le champ et le sélecteur ne disparaissent pas du DOM, ils
+   sont simplement masqués par le overflow:hidden du shell au fur et à
+   mesure qu'il rétrécit : pas besoin qu'ils rétrécissent eux-mêmes. */
+.search-bar.is-collapsed .search-bar__shell { width: 86px; }
+
+.search-bar__expandable { display: contents; }
+
+.search-bar__field,
+.engine-switch {
+  transition: opacity 0.15s ease;
+}
+
+.search-bar.is-collapsed .search-bar__field,
+.search-bar.is-collapsed .engine-switch {
+  opacity: 0;
 }
 
 /* Le noir plein sur toute la barre était fatiguant, en particulier pour la
@@ -72,6 +96,8 @@ body {
 }
 
 #searchInput {
+  appearance: none;
+  -webkit-appearance: none;
   flex: 1;
   min-width: 0;
   border: none;
@@ -85,6 +111,13 @@ body {
 }
 
 #searchInput::placeholder { color: var(--muted-on-white); }
+
+/* type="search" ajoute par défaut, sur Chrome/Safari, un bouton "effacer"
+   natif non stylé et des angles arrondis propres au champ. On neutralise
+   les deux : on a déjà notre propre chrome visuel (le champ blanc, la
+   loupe custom), ce natif ne fait que détonner. */
+#searchInput::-webkit-search-cancel-button,
+#searchInput::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
 
 /* ---------- Sélecteur de moteur : segmenté, jamais de contenu qui déborde
    de la barre (important pour un embed en iframe à hauteur fixe). ---------- */
@@ -146,9 +179,18 @@ body {
 }
 
 .search-bar__submit {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
   position: relative;
   flex-shrink: 0;
-  width: 74px;
+  /* Doit être égal à la hauteur réellement disponible dans le shell une
+     fois bordure + padding déduits (86 - 2*4 - 2*6 = 66), sinon le bouton
+     déborde du cadre replié et le noir du cadre apparaît en croissant sur
+     un bord (c'était le bug du "point de départ pas beau"). */
+  width: 66px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -195,7 +237,7 @@ body {
 }
 
 .search-bar__submit:focus-visible { outline: 2px solid var(--white); outline-offset: -4px; }
-.search-bar__submit svg { width: 26px; height: 26px; }
+.search-bar__submit svg { width: 24px; height: 24px; }
 
 /* Note de confidentialité : présente pour les lecteurs d'écran, invisible
    à l'écran pour rester fidèle à la maquette de référence. */
@@ -211,38 +253,39 @@ body {
 </head>
 <body>
 
-<form id="webSearchForm" class="search-bar" autocomplete="off">
+<form id="webSearchForm" class="search-bar is-collapsed" autocomplete="off">
   <div class="search-bar__shell">
-    <div class="search-bar__field">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7.5"/>
-        <line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/>
-      </svg>
-      <input
-        type="search"
-        id="searchInput"
-        placeholder="Rechercher..."
-        maxlength="200"
-        autocomplete="off"
-        spellcheck="false"
-        required
-      />
+    <div class="search-bar__expandable">
+      <div class="search-bar__field">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7.5"/>
+          <line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/>
+        </svg>
+        <input
+          type="search"
+          id="searchInput"
+          placeholder="Rechercher..."
+          maxlength="200"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+
+      <div class="engine-switch" role="radiogroup" aria-label="Moteur de recherche">
+        <span class="engine-highlight" aria-hidden="true"></span>
+        <label class="engine-option" data-engine="google">
+          <input type="radio" name="engine" value="google" checked>Google
+        </label>
+        <label class="engine-option" data-engine="bing">
+          <input type="radio" name="engine" value="bing">Bing
+        </label>
+        <label class="engine-option" data-engine="ecosia">
+          <input type="radio" name="engine" value="ecosia">Ecosia
+        </label>
+      </div>
     </div>
 
-    <div class="engine-switch" role="radiogroup" aria-label="Moteur de recherche">
-      <span class="engine-highlight" aria-hidden="true"></span>
-      <label class="engine-option" data-engine="google">
-        <input type="radio" name="engine" value="google" checked>Google
-      </label>
-      <label class="engine-option" data-engine="bing">
-        <input type="radio" name="engine" value="bing">Bing
-      </label>
-      <label class="engine-option" data-engine="ecosia">
-        <input type="radio" name="engine" value="ecosia">Ecosia
-      </label>
-    </div>
-
-    <button type="submit" class="search-bar__submit" id="submitButton" aria-label="Lancer la recherche">
+    <button type="submit" class="search-bar__submit" id="submitButton" aria-label="Ouvrir la recherche" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="7.5"/>
         <line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/>
@@ -277,6 +320,50 @@ body {
   var highlight = document.querySelector(".engine-highlight");
   var radios = Array.prototype.slice.call(form.querySelectorAll('input[name="engine"]'));
   var announcement = document.getElementById("engineAnnouncement");
+  var expandable = document.querySelector(".search-bar__expandable");
+
+  // ---------- Repli / déploiement ----------
+  // Repliée, la barre n'est qu'un cercle avec la loupe. Le champ et le
+  // sélecteur restent dans le DOM (jamais display:none, sinon leurs
+  // dimensions ne seraient plus mesurables pour le highlight) : on les
+  // rend juste "inert" pour qu'ils ne soient ni focusables ni atteignables
+  // au clavier tant qu'ils sont masqués par le overflow:hidden du shell.
+  function isCollapsed() { return form.classList.contains("is-collapsed"); }
+
+  function expand() {
+    if (!isCollapsed()) return;
+    form.classList.remove("is-collapsed");
+    submitButton.setAttribute("aria-expanded", "true");
+    submitButton.setAttribute("aria-label", "Lancer la recherche");
+    expandable.inert = false;
+    input.focus();
+  }
+
+  function collapse() {
+    if (isCollapsed()) return;
+    form.classList.add("is-collapsed");
+    submitButton.setAttribute("aria-expanded", "false");
+    submitButton.setAttribute("aria-label", "Ouvrir la recherche");
+    expandable.inert = true;
+  }
+
+  // État initial cohérent avec la classe "is-collapsed" posée dans le HTML.
+  expandable.inert = true;
+
+  document.addEventListener("click", function (event) {
+    // Referme seulement si le champ est vide : on ne fait jamais perdre une
+    // recherche déjà tapée à cause d'un clic extérieur accidentel.
+    if (!isCollapsed() && !form.contains(event.target) && !input.value.trim()) {
+      collapse();
+    }
+  });
+
+  input.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      collapse();
+      submitButton.focus();
+    }
+  });
 
   // Fait glisser le highlight jusqu'au segment coché, en se basant sur sa
   // position réelle (largeurs de texte variables Google/Bing/Ecosia) plutôt
@@ -319,6 +406,14 @@ body {
 
   form.addEventListener("submit", function (event) {
     event.preventDefault();
+
+    // Le bouton "loupe" a deux rôles selon l'état : replié, un clic déploie
+    // la barre (et met le focus dans le champ) sans lancer de recherche ;
+    // déployé, il soumet normalement. On tranche ça avant tout le reste.
+    if (isCollapsed()) {
+      expand();
+      return;
+    }
 
     var checked = form.querySelector('input[name="engine"]:checked');
     var entry = checked ? SEARCH_ENGINES[checked.value] : null;
