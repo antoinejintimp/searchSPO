@@ -36,18 +36,18 @@ body {
 
 .search-bar {
   position: relative;
-  max-width: 640px;
+  max-width: 760px;
 }
 
 .search-bar__shell {
   display: flex;
   align-items: stretch;
-  height: 66px;
-  padding: 5px;
-  gap: 6px;
+  height: 86px;
+  padding: 6px;
+  gap: 8px;
   border-radius: 999px;
   background: var(--ink);
-  border: 3px solid var(--lime);
+  border: 4px solid var(--lime);
 }
 
 /* Le noir plein sur toute la barre était fatiguant, en particulier pour la
@@ -60,8 +60,8 @@ body {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 0 22px;
+  gap: 16px;
+  padding: 0 28px;
   border-radius: 999px;
   background: var(--white);
 }
@@ -78,7 +78,7 @@ body {
   outline: none;
   background: transparent;
   color: var(--ink);
-  font-size: 15.5px;
+  font-size: 19px;
   font-weight: 500;
   font-family: inherit;
   letter-spacing: 0.01em;
@@ -95,15 +95,15 @@ body {
   align-items: center;
   border-radius: 999px;
   background: var(--white);
-  padding: 3px;
-  gap: 2px;
+  padding: 4px;
+  gap: 3px;
 }
 
 .engine-highlight {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  height: calc(100% - 6px);
+  top: 4px;
+  left: 4px;
+  height: calc(100% - 8px);
   width: 0; /* posé en JS, mesuré sur l'option cochée */
   border-radius: 999px;
   background: var(--lime);
@@ -117,9 +117,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 9px 15px;
+  padding: 12px 20px;
   border-radius: 999px;
-  font-size: 12.5px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--muted-on-white);
@@ -148,7 +148,7 @@ body {
 .search-bar__submit {
   position: relative;
   flex-shrink: 0;
-  width: 56px;
+  width: 74px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -195,7 +195,7 @@ body {
 }
 
 .search-bar__submit:focus-visible { outline: 2px solid var(--white); outline-offset: -4px; }
-.search-bar__submit svg { width: 20px; height: 20px; }
+.search-bar__submit svg { width: 26px; height: 26px; }
 
 /* Note de confidentialité : présente pour les lecteurs d'écran, invisible
    à l'écran pour rester fidèle à la maquette de référence. */
@@ -214,7 +214,7 @@ body {
 <form id="webSearchForm" class="search-bar" autocomplete="off">
   <div class="search-bar__shell">
     <div class="search-bar__field">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="7.5"/>
         <line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/>
       </svg>
@@ -295,7 +295,7 @@ body {
     // highlight (ça nous est arrivé en passant à une bordure de 2px ici).
     var paddingBoxLeft = switchRect.left + switchEl.clientLeft;
     highlight.style.width = labelRect.width + "px";
-    highlight.style.transform = "translateX(" + (labelRect.left - paddingBoxLeft - 3) + "px)";
+    highlight.style.transform = "translateX(" + (labelRect.left - paddingBoxLeft - 4) + "px)";
 
     var entry = SEARCH_ENGINES[checked.value];
     if (entry) {
