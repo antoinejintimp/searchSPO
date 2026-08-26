@@ -2,36 +2,36 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Recherche — Intranet</title>
+<title>Recherche — Démo</title>
 <style>
 * { box-sizing: border-box; }
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 
 html, body {
   margin: 0;
   padding: 0;
-  background: transparent; /* laisse voir la page hôte (SharePoint) derrière */
+  background: transparent; /* laisse voir la page hôte derrière */
 }
 
 body {
   padding: 24px;
-  font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
 
+/* ---- Charte reprise de nanobiotix.com/fr : noir + vert citron néon,
+   IBM Plex Sans, boutons en contour à bordure épaisse. Pas de dégradé ni
+   de glossy, leur langage visuel est plat et graphique, pas doux. ---- */
 :root {
-  --navy-dark: #123047;   /* extrémité gauche de la barre */
-  --navy-mid: #234a5c;    /* étape intermédiaire du dégradé */
-  --navy-light: #3f6b76;  /* extrémité droite, avant la puce blanche */
-  --navy-ink: #123047;    /* texte / ligne sélectionnée dans la liste */
-  --lime: #c8db1f;        /* bouton de recherche */
-  --lime-dark: #aec01a;
-  --line: #e1e6ea;
-  --muted: #74828f;
+  --ink: #000000;      /* fond, texte sur lime */
+  --lime: #e0fe3d;      /* accent principal du site */
+  --white: #ffffff;
+  --muted: rgba(255, 255, 255, 0.6);
+  --muted-on-white: #6b7280;
 }
 
 .search-bar {
@@ -46,33 +46,29 @@ body {
   padding: 5px;
   gap: 6px;
   border-radius: 999px;
-  background: linear-gradient(100deg, var(--navy-dark) 0%, var(--navy-mid) 55%, var(--navy-light) 100%);
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -14px 18px -14px rgba(0, 0, 0, 0.2),
-    0 6px 10px rgba(18, 48, 71, 0.16),
-    0 20px 36px -8px rgba(18, 48, 71, 0.32);
+  background: var(--ink);
+  border: 3px solid var(--lime);
 }
 
-/* Le déclencheur et le bouton ne touchent plus les bords de la pilule :
-   ce sont des puces rondes flottantes, avec un mince anneau de dégradé
-   visible tout autour (padding du shell). C'est ce jeu d'arrondis
-   "imbriqués" (pilule dans la pilule) qu'on voit sur le vrai bouton
-   "Mon espace locataire" flottant dans la barre de nav du site, plutôt
-   qu'une couture droite entre segments d'une seule forme continue. */
+/* Le noir plein sur toute la barre était fatiguant, en particulier pour la
+   zone de saisie (c'est là qu'on fixe l'écran le plus longtemps). Elle
+   devient une pilule blanche flottante, comme le sélecteur et le bouton :
+   le cadre noir/citron vert reste la signature de la marque, mais la
+   lecture/saisie se fait sur fond clair. */
 .search-bar__field {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 0 0 0 22px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: var(--white);
 }
 
 .search-bar__field svg {
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
 }
 
 #searchInput {
@@ -81,28 +77,24 @@ body {
   border: none;
   outline: none;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font-size: 15.5px;
   font-weight: 500;
   font-family: inherit;
   letter-spacing: 0.01em;
 }
 
-#searchInput::placeholder { color: rgba(255, 255, 255, 0.72); }
+#searchInput::placeholder { color: var(--muted-on-white); }
 
 /* ---------- Sélecteur de moteur : segmenté, jamais de contenu qui déborde
-   de la barre. C'est le point important pour un embed en iframe à hauteur
-   fixe (web part "Embed" SharePoint) : un menu qui s'ouvre par-dessus dépend
-   d'une hauteur qu'on ne contrôle pas et se fait couper. Ici, rien ne
-   s'affiche jamais hors de cette pilule, quelle que soit la hauteur donnée
-   à l'iframe. ---------- */
+   de la barre (important pour un embed en iframe à hauteur fixe). ---------- */
 .engine-switch {
   position: relative;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7f9fa 100%);
+  background: var(--white);
   padding: 3px;
   gap: 2px;
 }
@@ -114,7 +106,7 @@ body {
   height: calc(100% - 6px);
   width: 0; /* posé en JS, mesuré sur l'option cochée */
   border-radius: 999px;
-  background: var(--navy-ink);
+  background: var(--lime);
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s cubic-bezier(0.65, 0, 0.35, 1);
   z-index: 0;
 }
@@ -128,9 +120,9 @@ body {
   padding: 9px 15px;
   border-radius: 999px;
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--muted);
+  color: var(--muted-on-white);
   cursor: pointer;
   user-select: none;
   transition: color 0.2s ease;
@@ -144,7 +136,9 @@ body {
   cursor: pointer;
 }
 
-.engine-option:has(input:checked) { color: #fff; }
+/* Le texte de l'option active passe en noir : c'est le seul pairing lisible
+   sur un accent aussi clair que ce citron vert (du blanc y disparaîtrait). */
+.engine-option:has(input:checked) { color: var(--ink); }
 
 .engine-option:has(input:focus-visible) {
   outline: 2px solid var(--lime);
@@ -159,15 +153,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(165deg, #d4e63a 0%, var(--lime) 55%, var(--lime-dark) 100%);
+  background: var(--lime);
   border: none;
   cursor: pointer;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(18, 48, 71, 0.22);
   transition: filter 0.2s ease, transform 0.15s ease;
 }
 
-.search-bar__submit:hover { filter: brightness(1.04); }
+.search-bar__submit:hover { filter: brightness(0.94); }
 .search-bar__submit:active { transform: scale(0.95); }
 
 /* Retour au clic : un anneau qui s'estompe + la loupe qui "déclenche",
@@ -181,7 +174,7 @@ body {
   height: 10px;
   margin: -5px 0 0 -5px;
   border-radius: 50%;
-  background: rgba(18, 48, 71, 0.35);
+  background: rgba(0, 0, 0, 0.3);
   opacity: 0;
   pointer-events: none;
 }
@@ -200,7 +193,8 @@ body {
   70% { transform: scale(1.12); }
   100% { transform: scale(1); }
 }
-.search-bar__submit:focus-visible { outline: 2px solid var(--navy-ink); outline-offset: -4px; }
+
+.search-bar__submit:focus-visible { outline: 2px solid var(--white); outline-offset: -4px; }
 .search-bar__submit svg { width: 20px; height: 20px; }
 
 /* Note de confidentialité : présente pour les lecteurs d'écran, invisible
@@ -249,7 +243,7 @@ body {
     </div>
 
     <button type="submit" class="search-bar__submit" id="submitButton" aria-label="Lancer la recherche">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="7.5"/>
         <line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/>
       </svg>
@@ -293,8 +287,15 @@ body {
     var label = checked.closest(".engine-option");
     var switchRect = switchEl.getBoundingClientRect();
     var labelRect = label.getBoundingClientRect();
+    // Le highlight (position: absolute) se positionne par rapport au bord
+    // intérieur du padding de .engine-switch, pas par rapport à son bord
+    // extérieur (qui inclut la bordure). switchRect.left inclut la bordure ;
+    // clientLeft donne sa largeur, à soustraire pour retrouver le bord du
+    // padding. Sans ça, tout changement de largeur de bordure décale le
+    // highlight (ça nous est arrivé en passant à une bordure de 2px ici).
+    var paddingBoxLeft = switchRect.left + switchEl.clientLeft;
     highlight.style.width = labelRect.width + "px";
-    highlight.style.transform = "translateX(" + (labelRect.left - switchRect.left - 3) + "px)";
+    highlight.style.transform = "translateX(" + (labelRect.left - paddingBoxLeft - 3) + "px)";
 
     var entry = SEARCH_ENGINES[checked.value];
     if (entry) {
@@ -308,10 +309,10 @@ body {
   window.addEventListener("resize", moveHighlight);
   moveHighlight();
 
-  // Le libellé "Outfit" charge en asynchrone (@import) : ses métriques
-  // diffèrent légèrement de la police de repli tant qu'elle n'est pas prête,
-  // ce qui décale le highlight de quelques dixièmes de pixel. On recale une
-  // fois la police effectivement appliquée.
+  // Le libellé "IBM Plex Sans" charge en asynchrone (@import) : ses
+  // métriques diffèrent légèrement de la police de repli tant qu'elle
+  // n'est pas prête, ce qui décale le highlight de quelques dixièmes de
+  // pixel. On recale une fois la police effectivement appliquée.
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(moveHighlight);
   }
