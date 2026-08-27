@@ -37,11 +37,12 @@ body {
 .search-bar {
   position: relative;
   display: flex;
-  justify-content: flex-end; /* ancre tout le composant à droite de son
-    conteneur : repliée, la barre devient un petit cercle (86px), qui sans
-    ça resterait collé au bord gauche de l'espace alloué plutôt qu'au bord
-    droit où le déclencheur doit rester visible. */
-  max-width: 760px;
+  justify-content: flex-end; /* ancre le composant au bord droit de la
+    largeur RÉELLE disponible (celle de l'iframe/du conteneur hôte, pas
+    celle, plus étroite, de la barre elle-même). C'est cette largeur ici
+    qui doit être celle de l'iframe : le plafond de 760px se pose plus bas,
+    sur .search-bar__shell, pas ici. */
+  width: 100%;
 }
 
 .search-bar__shell {
@@ -52,6 +53,7 @@ body {
     pas vers la droite (qui masquerait le bouton lui-même). */
   flex-shrink: 0; /* la largeur (100% ou 86px) est pilotée explicitement,
     pas question qu'un calcul de flex sur .search-bar vienne l'écraser. */
+  max-width: 760px; /* le plafond de largeur déployée vit ici désormais */
   height: 86px;
   width: 100%;
   padding: 6px;
