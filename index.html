@@ -367,6 +367,20 @@ body {
     }
   });
 
+  // Cas de l'embed en iframe (SharePoint) : un clic en dehors de l'iframe
+  // (sur le reste de la page hôte) se produit dans un autre document,
+  // cross-origin, invisible pour le listener "click" ci-dessus. Ce qui
+  // traverse quand même la frontière, c'est la perte de focus de la
+  // fenêtre elle-même : quand le focus quitte notre iframe pour la page
+  // parente (ou un autre onglet), "blur" se déclenche ici, peu importe le
+  // domaine. C'est le seul signal fiable pour détecter un clic extérieur
+  // une fois embarqué.
+  window.addEventListener("blur", function () {
+    if (!isCollapsed() && !input.value.trim()) {
+      collapse();
+    }
+  });
+
   input.addEventListener("keydown", function (event) {
     if (event.key === "Escape") {
       collapse();
