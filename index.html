@@ -1,490 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Recherche — Démo</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Recherche web — Les Résidences de l’Orléanais</title>
 <style>
-* { box-sizing: border-box; }
-
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
-
-html, body {
-  margin: 0;
-  padding: 0;
-  background: transparent; /* laisse voir la page hôte derrière */
+:root{--petrol:#003b4f;--cyan:#00ace7;--muted:#5c727a;--line:#dce7ea;--paper:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;background:transparent}
+body{padding:14px;font-family:"Segoe UI",Arial,sans-serif;color:var(--petrol)}
+.search{width:100%;max-width:940px;margin:auto;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px;background:var(--paper);border:1px solid var(--line);border-radius:40px;box-shadow:0 5px 18px #003b4f12;transition:border-color .18s,box-shadow .18s}
+.search:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px #00ace724,0 5px 18px #003b4f12}
+.field{min-width:0;display:flex;align-items:center;gap:13px;padding-left:16px}
+.field>svg{width:23px;height:23px;flex:none;color:var(--cyan)}
+input[type=search]{min-width:0;width:100%;border:0;background:transparent;font:400 16px/1.4 "Segoe UI",Arial,sans-serif;color:var(--petrol);outline:none;height:48px}
+input::placeholder{color:var(--muted);opacity:1}
+.engines{border:0;margin:0;padding:4px;display:flex;gap:2px;background:#f1f6f7;border-radius:24px;min-width:0}
+.engine{position:relative;cursor:pointer}
+.engine input{position:absolute;width:1px;height:1px;opacity:0}
+.engine span{display:flex;align-items:center;justify-content:center;height:38px;padding:0 13px;border-radius:20px;font-size:13px;font-weight:600;color:var(--muted);transition:background .18s,color .18s}
+.engine input:checked+span{background:var(--petrol);color:white;box-shadow:0 2px 4px #003b4f18}
+.engine input:focus-visible+span{outline:2px solid var(--cyan);outline-offset:2px}
+.submit{border:0;border-radius:28px;background:var(--petrol);color:white;display:flex;align-items:center;justify-content:center;gap:12px;height:50px;padding:0 10px 0 21px;font:600 14px "Segoe UI",Arial,sans-serif;cursor:pointer;transition:background .18s,transform .18s}
+.submit:hover{background:#00566d}.submit:active{transform:scale(.98)}
+.submit:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.submit svg{width:32px;height:32px;background:var(--cyan);border-radius:50%;padding:7px;color:var(--petrol)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:690px){
+.search{grid-template-columns:minmax(0,1fr) auto;border-radius:24px;padding:8px;gap:6px}
+.field{padding-left:10px;gap:10px}
+.engines{grid-column:1/-1;grid-row:2;justify-content:center;background:transparent;border-top:1px solid #edf2f4;border-radius:0;padding:7px 0 0}
+.engine{flex:1;max-width:140px}.engine span{height:36px}
+.submit{grid-column:2;grid-row:1;width:48px;height:48px;padding:0}.submit span{display:none}.submit svg{background:transparent;color:white;width:25px;height:25px;padding:0}
 }
-
-body {
-  padding: 24px;
-  font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
-}
-
-/* ---- Charte reprise de nanobiotix.com/fr : noir + vert citron néon,
-   IBM Plex Sans, boutons en contour à bordure épaisse. Pas de dégradé ni
-   de glossy, leur langage visuel est plat et graphique, pas doux. ---- */
-:root {
-  --ink: #000000;      /* fond, texte sur lime */
-  --lime: #e0fe3d;      /* accent principal du site */
-  --white: #ffffff;
-  --muted: rgba(255, 255, 255, 0.6);
-  --muted-on-white: #6b7280;
-}
-
-.search-bar {
-  position: relative;
-  display: flex;
-  justify-content: flex-end; /* ancre le composant au bord droit de la
-    largeur RÉELLE disponible (celle de l'iframe/du conteneur hôte, pas
-    celle, plus étroite, de la barre elle-même). C'est cette largeur ici
-    qui doit être celle de l'iframe : le plafond de 760px se pose plus bas,
-    sur .search-bar__shell, pas ici. */
-  width: 100%;
-}
-
-.search-bar__shell {
-  display: flex;
-  align-items: stretch;
-  justify-content: flex-end; /* le bouton reste ancré à droite quand la
-    barre est repliée : le contenu qui déborde se cache vers la gauche,
-    pas vers la droite (qui masquerait le bouton lui-même). */
-  flex-shrink: 0; /* la largeur (100% ou 86px) est pilotée explicitement,
-    pas question qu'un calcul de flex sur .search-bar vienne l'écraser. */
-  max-width: 760px; /* le plafond de largeur déployée vit ici désormais */
-  height: 86px;
-  width: 100%;
-  padding: 6px;
-  gap: 8px;
-  border-radius: 999px;
-  background: var(--ink);
-  border: 4px solid var(--lime);
-  overflow: hidden;
-  transition: width 0.35s cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-/* Repliée, la barre n'est plus qu'un cercle (largeur = hauteur) autour du
-   bouton loupe. Le champ et le sélecteur ne disparaissent pas du DOM, ils
-   sont simplement masqués par le overflow:hidden du shell au fur et à
-   mesure qu'il rétrécit : pas besoin qu'ils rétrécissent eux-mêmes. */
-.search-bar.is-collapsed .search-bar__shell { width: 86px; }
-
-.search-bar__expandable { display: contents; }
-
-.search-bar__field,
-.engine-switch {
-  transition: opacity 0.15s ease;
-}
-
-.search-bar.is-collapsed .search-bar__field,
-.search-bar.is-collapsed .engine-switch {
-  opacity: 0;
-}
-
-/* Le noir plein sur toute la barre était fatiguant, en particulier pour la
-   zone de saisie (c'est là qu'on fixe l'écran le plus longtemps). Elle
-   devient une pilule blanche flottante, comme le sélecteur et le bouton :
-   le cadre noir/citron vert reste la signature de la marque, mais la
-   lecture/saisie se fait sur fond clair. */
-.search-bar__field {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 28px;
-  border-radius: 999px;
-  background: var(--white);
-}
-
-.search-bar__field svg {
-  flex-shrink: 0;
-  color: var(--ink);
-}
-
-#searchInput {
-  appearance: none;
-  -webkit-appearance: none;
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--ink);
-  font-size: 19px;
-  font-weight: 500;
-  font-family: inherit;
-  letter-spacing: 0.01em;
-}
-
-#searchInput::placeholder { color: var(--muted-on-white); }
-
-/* type="search" ajoute par défaut, sur Chrome/Safari, un bouton "effacer"
-   natif non stylé et des angles arrondis propres au champ. On neutralise
-   les deux : on a déjà notre propre chrome visuel (le champ blanc, la
-   loupe custom), ce natif ne fait que détonner. */
-#searchInput::-webkit-search-cancel-button,
-#searchInput::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
-
-/* ---------- Sélecteur de moteur : segmenté, jamais de contenu qui déborde
-   de la barre (important pour un embed en iframe à hauteur fixe). ---------- */
-.engine-switch {
-  position: relative;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  border-radius: 999px;
-  background: var(--white);
-  padding: 4px;
-  gap: 3px;
-}
-
-.engine-highlight {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  height: calc(100% - 8px);
-  width: 0; /* posé en JS, mesuré sur l'option cochée */
-  border-radius: 999px;
-  background: var(--lime);
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s cubic-bezier(0.65, 0, 0.35, 1);
-  z-index: 0;
-}
-
-.engine-option {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--muted-on-white);
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.2s ease;
-}
-
-.engine-option input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  margin: 0;
-  cursor: pointer;
-}
-
-/* Le texte de l'option active passe en noir : c'est le seul pairing lisible
-   sur un accent aussi clair que ce citron vert (du blanc y disparaîtrait). */
-.engine-option:has(input:checked) { color: var(--ink); }
-
-.engine-option:has(input:focus-visible) {
-  outline: 2px solid var(--lime);
-  outline-offset: 2px;
-}
-
-.search-bar__submit {
-  appearance: none;
-  -webkit-appearance: none;
-  margin: 0;
-  padding: 0;
-  font: inherit;
-  position: relative;
-  flex-shrink: 0;
-  /* Doit être égal à la hauteur réellement disponible dans le shell une
-     fois bordure + padding déduits (86 - 2*4 - 2*6 = 66), sinon le bouton
-     déborde du cadre replié et le noir du cadre apparaît en croissant sur
-     un bord (c'était le bug du "point de départ pas beau"). */
-  width: 66px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--lime);
-  border: none;
-  cursor: pointer;
-  overflow: hidden;
-  transition: filter 0.2s ease, transform 0.15s ease;
-}
-
-.search-bar__submit:hover { filter: brightness(0.94); }
-.search-bar__submit:active { transform: scale(0.95); }
-
-/* Retour au clic : un anneau qui s'estompe + la loupe qui "déclenche",
-   comme un obturateur. Un seul geste, déclenché une fois par soumission. */
-.search-bar__submit::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.search-bar__submit.is-firing::after { animation: submit-ripple 0.5s ease-out; }
-.search-bar__submit.is-firing svg { animation: submit-icon-pulse 0.4s ease-out; }
-
-@keyframes submit-ripple {
-  from { transform: scale(1); opacity: 0.45; }
-  to { transform: scale(9); opacity: 0; }
-}
-
-@keyframes submit-icon-pulse {
-  0% { transform: scale(1); }
-  35% { transform: scale(0.8); }
-  70% { transform: scale(1.12); }
-  100% { transform: scale(1); }
-}
-
-.search-bar__submit:focus-visible { outline: 2px solid var(--white); outline-offset: -4px; }
-.search-bar__submit svg { width: 24px; height: 24px; }
-
-/* Note de confidentialité : présente pour les lecteurs d'écran, invisible
-   à l'écran pour rester fidèle à la maquette de référence. */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(forced-colors:active){.engine input:checked+span{border:2px solid Highlight}.search,.submit{border:1px solid ButtonText}}
 </style>
 </head>
 <body>
-
-<form id="webSearchForm" class="search-bar is-collapsed" autocomplete="off">
-  <div class="search-bar__shell">
-    <div class="search-bar__expandable">
-      <div class="search-bar__field">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7.5"/>
-          <line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/>
-        </svg>
-        <input
-          type="search"
-          id="searchInput"
-          placeholder="Rechercher..."
-          maxlength="200"
-          autocomplete="off"
-          spellcheck="false"
-        />
-      </div>
-
-      <div class="engine-switch" role="radiogroup" aria-label="Moteur de recherche">
-        <span class="engine-highlight" aria-hidden="true"></span>
-        <label class="engine-option" data-engine="google">
-          <input type="radio" name="engine" value="google" checked>Google
-        </label>
-        <label class="engine-option" data-engine="bing">
-          <input type="radio" name="engine" value="bing">Bing
-        </label>
-        <label class="engine-option" data-engine="ecosia">
-          <input type="radio" name="engine" value="ecosia">Ecosia
-        </label>
-      </div>
-    </div>
-
-    <button type="submit" class="search-bar__submit" id="submitButton" aria-label="Ouvrir la recherche" aria-expanded="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7.5"/>
-        <line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/>
-      </svg>
-    </button>
-  </div>
-
-  <p class="sr-only" role="status" id="engineAnnouncement">
-    Moteur sélectionné : Google. La recherche s'ouvrira dans un nouvel onglet, sans transmettre l'adresse de ce site.
-  </p>
+<form class="search" role="search" aria-label="Recherche sur le web" action="https://www.google.com/search" method="get" target="_blank" rel="noopener noreferrer" autocomplete="off">
+<div class="field">
+<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+<label class="sr-only" for="query">Que recherchez-vous sur le web ?</label>
+<input id="query" type="search" name="q" placeholder="Rechercher sur le web…" required maxlength="200" enterkeyhint="search" aria-describedby="search-help">
+</div>
+<fieldset class="engines">
+<legend class="sr-only">Moteur de recherche</legend>
+<label class="engine"><input type="radio" name="engine" value="google" checked><span>Google</span></label>
+<label class="engine"><input type="radio" name="engine" value="bing"><span>Bing</span></label>
+<label class="engine"><input type="radio" name="engine" value="ecosia"><span>Ecosia</span></label>
+</fieldset>
+<button class="submit" type="submit" aria-label="Rechercher sur le web — nouvel onglet"><span>Rechercher</span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+<p id="search-help" class="sr-only">Les résultats s’ouvrent dans un nouvel onglet sur le moteur choisi. Cette barre recherche sur le web.</p>
+<p id="status" class="sr-only" role="status" aria-live="polite"></p>
 </form>
-
 <script>
-(function () {
-  "use strict";
-
-  // Whitelist stricte, indexée par clé opaque (pas par URL) : même si le DOM
-  // était manipulé (extension, devtools, injection future d'options), seule
-  // une valeur de cette liste peut être utilisée pour construire l'URL cible.
-  var SEARCH_ENGINES = Object.freeze({
-    google: { base: "https://www.google.com/search", label: "Google" },
-    bing:   { base: "https://www.bing.com/search",   label: "Bing" },
-    ecosia: { base: "https://www.ecosia.org/search", label: "Ecosia" }
-  });
-
-  var MAX_QUERY_LENGTH = 200;
-
-  var form = document.getElementById("webSearchForm");
-  var input = document.getElementById("searchInput");
-  var submitButton = document.getElementById("submitButton");
-  var switchEl = document.querySelector(".engine-switch");
-  var highlight = document.querySelector(".engine-highlight");
-  var radios = Array.prototype.slice.call(form.querySelectorAll('input[name="engine"]'));
-  var announcement = document.getElementById("engineAnnouncement");
-  var expandable = document.querySelector(".search-bar__expandable");
-
-  // ---------- Repli / déploiement ----------
-  // Repliée, la barre n'est qu'un cercle avec la loupe. Le champ et le
-  // sélecteur restent dans le DOM (jamais display:none, sinon leurs
-  // dimensions ne seraient plus mesurables pour le highlight) : on les
-  // rend juste "inert" pour qu'ils ne soient ni focusables ni atteignables
-  // au clavier tant qu'ils sont masqués par le overflow:hidden du shell.
-  function isCollapsed() { return form.classList.contains("is-collapsed"); }
-
-  function expand() {
-    if (!isCollapsed()) return;
-    form.classList.remove("is-collapsed");
-    submitButton.setAttribute("aria-expanded", "true");
-    submitButton.setAttribute("aria-label", "Lancer la recherche");
-    expandable.inert = false;
-    input.focus();
-  }
-
-  function collapse() {
-    if (isCollapsed()) return;
-    form.classList.add("is-collapsed");
-    submitButton.setAttribute("aria-expanded", "false");
-    submitButton.setAttribute("aria-label", "Ouvrir la recherche");
-    expandable.inert = true;
-  }
-
-  // État initial cohérent avec la classe "is-collapsed" posée dans le HTML.
-  expandable.inert = true;
-
-  document.addEventListener("click", function (event) {
-    // Referme seulement si le champ est vide : on ne fait jamais perdre une
-    // recherche déjà tapée à cause d'un clic extérieur accidentel.
-    if (!isCollapsed() && !form.contains(event.target) && !input.value.trim()) {
-      collapse();
-    }
-  });
-
-  // Cas de l'embed en iframe (SharePoint) : un clic en dehors de l'iframe
-  // (sur le reste de la page hôte) se produit dans un autre document,
-  // cross-origin, invisible pour le listener "click" ci-dessus. Ce qui
-  // traverse quand même la frontière, c'est la perte de focus de la
-  // fenêtre elle-même : quand le focus quitte notre iframe pour la page
-  // parente (ou un autre onglet), "blur" se déclenche ici, peu importe le
-  // domaine. C'est le seul signal fiable pour détecter un clic extérieur
-  // une fois embarqué.
-  window.addEventListener("blur", function () {
-    if (!isCollapsed() && !input.value.trim()) {
-      collapse();
-    }
-  });
-
-  input.addEventListener("keydown", function (event) {
-    if (event.key === "Escape") {
-      collapse();
-      submitButton.focus();
-    }
-  });
-
-  // Fait glisser le highlight jusqu'au segment coché, en se basant sur sa
-  // position réelle (largeurs de texte variables Google/Bing/Ecosia) plutôt
-  // que sur une valeur figée en dur.
-  function moveHighlight() {
-    var checked = form.querySelector('input[name="engine"]:checked');
-    if (!checked) return;
-    var label = checked.closest(".engine-option");
-    var switchRect = switchEl.getBoundingClientRect();
-    var labelRect = label.getBoundingClientRect();
-    // Le highlight (position: absolute) se positionne par rapport au bord
-    // intérieur du padding de .engine-switch, pas par rapport à son bord
-    // extérieur (qui inclut la bordure). switchRect.left inclut la bordure ;
-    // clientLeft donne sa largeur, à soustraire pour retrouver le bord du
-    // padding. Sans ça, tout changement de largeur de bordure décale le
-    // highlight (ça nous est arrivé en passant à une bordure de 2px ici).
-    var paddingBoxLeft = switchRect.left + switchEl.clientLeft;
-    highlight.style.width = labelRect.width + "px";
-    highlight.style.transform = "translateX(" + (labelRect.left - paddingBoxLeft - 4) + "px)";
-
-    var entry = SEARCH_ENGINES[checked.value];
-    if (entry) {
-      announcement.textContent = "Moteur sélectionné : " + entry.label + ". La recherche s'ouvrira dans un nouvel onglet, sans transmettre l'adresse de ce site.";
-    }
-  }
-
-  radios.forEach(function (radio) {
-    radio.addEventListener("change", moveHighlight);
-  });
-  window.addEventListener("resize", moveHighlight);
-  moveHighlight();
-
-  // Le libellé "IBM Plex Sans" charge en asynchrone (@import) : ses
-  // métriques diffèrent légèrement de la police de repli tant qu'elle
-  // n'est pas prête, ce qui décale le highlight de quelques dixièmes de
-  // pixel. On recale une fois la police effectivement appliquée.
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(moveHighlight);
-  }
-
-  form.addEventListener("submit", function (event) {
-    event.preventDefault();
-
-    // Le bouton "loupe" a deux rôles selon l'état : replié, un clic déploie
-    // la barre (et met le focus dans le champ) sans lancer de recherche ;
-    // déployé, il soumet normalement. On tranche ça avant tout le reste.
-    if (isCollapsed()) {
-      expand();
-      return;
-    }
-
-    var checked = form.querySelector('input[name="engine"]:checked');
-    var entry = checked ? SEARCH_ENGINES[checked.value] : null;
-    // Le moteur doit exister dans la whitelist : sinon on abandonne plutôt
-    // que de deviner une URL.
-    if (!entry) return;
-
-    var query = input.value.trim().slice(0, MAX_QUERY_LENGTH);
-    if (!query) {
-      input.focus();
-      return;
-    }
-
-    // Petit retour au clic (anneau + loupe qui "déclenche"). On repart de
-    // zéro à chaque soumission (y compris rapprochées) via un reflow forcé,
-    // sinon la classe déjà présente empêcherait l'animation de rejouer.
-    submitButton.classList.remove("is-firing");
-    void submitButton.offsetWidth;
-    submitButton.classList.add("is-firing");
-    setTimeout(function () { submitButton.classList.remove("is-firing"); }, 500);
-
-    // Construction via l'API URL (pas de concaténation de chaînes) :
-    // l'encodage du paramètre est délégué au navigateur, ce qui évite
-    // toute injection dans l'URL finale.
-    var url = new URL(entry.base);
-    url.searchParams.set("q", query);
-
-    // Ouverture sécurisée, légèrement différée :
-    // - target="_blank" + rel="noopener noreferrer" empêche la page ouverte
-    //   d'accéder à window.opener (protection contre le "reverse tabnabbing")
-    //   et empêche l'URL du site d'être transmise en Referer au moteur cible.
-    // - passer par un <a> réel plutôt que window.open(url, '_blank') garantit
-    //   que ces attributs sont bien respectés par le navigateur.
-    // - le nouvel onglet prend le focus dès son ouverture : sans ce délai,
-    //   cet onglet passe en arrière-plan avant que l'animation ait pu
-    //   s'afficher. 180ms reste largement dans la fenêtre d'activation
-    //   utilisateur (donc pas bloqué comme pop-up) et laisse le temps de
-    //   voir le retour visuel.
-    setTimeout(function () {
-      var link = document.createElement("a");
-      link.href = url.toString();
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.click();
-    }, 180);
-  });
-})();
+'use strict';
+const endpoints=Object.freeze({google:'https://www.google.com/search',bing:'https://www.bing.com/search',ecosia:'https://www.ecosia.org/search'});
+const form=document.querySelector('form'),query=document.querySelector('#query');
+for(const radio of form.querySelectorAll('[name=engine]'))radio.addEventListener('change',()=>{
+ const key=form.querySelector('[name=engine]:checked').value;
+ if(Object.hasOwn(endpoints,key))form.action=endpoints[key];
+ document.querySelector('#status').textContent='Moteur sélectionné : '+radio.nextElementSibling.textContent;
+});
+query.addEventListener('input',()=>query.setCustomValidity(''));
+form.addEventListener('submit',event=>{
+ const key=form.querySelector('[name=engine]:checked')?.value;
+ if(!Object.hasOwn(endpoints,key)){event.preventDefault();return;}
+ query.value=query.value.trim();
+ if(!query.value){event.preventDefault();query.setCustomValidity('Saisissez votre recherche.');query.reportValidity();query.focus();return;}
+ form.action=endpoints[key];
+});
+// Les boutons radio restent accessibles, mais seul le paramètre q est envoyé.
+form.addEventListener('formdata',event=>event.formData.delete('engine'));
 </script>
-
 </body>
 </html>
